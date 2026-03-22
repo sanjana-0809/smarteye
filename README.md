@@ -99,7 +99,7 @@ Web Dashboard Monitoring
 
 ### SmartEye System Mechanism
 
-[▶ Watch Mechanism Video](https://github.com/mgchandan0510/SmartEye-AI-Surveillance/blob/main/SmartEye%20Mechanism.mp4)
+[▶ Watch Mechanism Video](https://github.com/sanjana-0809/smarteye/blob/main/SmartEye%20Mechanism.mp4)
 
 This video demonstrates the internal working of the SmartEye system and hardware integration.
 
@@ -107,7 +107,7 @@ This video demonstrates the internal working of the SmartEye system and hardware
 
 ### Live Detection Demo
 
-[▶ Watch System Demo](https://github.com/mgchandan0510/SmartEye-AI-Surveillance/blob/main/DEMO.mp4)
+[▶ Watch System Demo](https://github.com/sanjana-0809/smarteye/blob/main/demo.mp4)
 
 A real-time demonstration showing:
 - Human detection
