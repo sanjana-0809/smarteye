@@ -15,7 +15,7 @@ def gen_frames():
             if frame:
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-        time.sleep(0.033)
+        time.sleep(0.04)
 
 @app.route('/')
 def index():

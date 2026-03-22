@@ -54,7 +54,7 @@ class CameraCore:
     def open_camera(self):
         if self.cap is not None:
             self.cap.release()
-            time.sleep(0.1)
+            time.sleep(0.033)
         try:
             self.cap = cv2.VideoCapture(CAMERA_INDEX)
             if not self.cap.isOpened():
