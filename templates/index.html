@@ -269,7 +269,7 @@
         <div class="corner corner-tr"></div>
         <div class="corner corner-bl"></div>
         <div class="corner corner-br"></div>
-        <img id="live-feed" src="/current_frame" alt="Live Feed">
+        <img id="live-feed" src="/video_feed" alt="Live Feed">
         <div class="feed-overlay">
           <div class="feed-tag">CAM-01 &nbsp;|&nbsp; YOLOv8n</div>
           <div class="rec-dot">LIVE</div>
@@ -320,11 +320,7 @@
   let alertCount = 0;
   let prevLogs = [];
 
-  function updateFrame() {
-    const img = document.getElementById('live-feed');
-    img.src = '/current_frame?' + Date.now();
-  }
-  setInterval(updateFrame, 40);
+  
 
   function fetchStatus() {
     fetch('/api/status')
