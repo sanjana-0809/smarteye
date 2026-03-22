@@ -1,12 +1,4 @@
-﻿---
-title: SmartEye
-emoji: 👁
-colorFrom: blue
-colorTo: green
-sdk: docker
-pinned: false
----
-
+﻿
 # SmartEye – AI Surveillance System
 
 SmartEye is an **AI-powered surveillance system** designed for real-time intrusion detection using edge AI. The system captures live video through a camera, detects humans using a **YOLOv8 deep learning model**, and automatically sends alerts through a **Telegram bot**.
@@ -16,7 +8,7 @@ It also provides a **web-based monitoring dashboard** to view the live camera fe
 The project is designed to run on **low-cost edge devices like Raspberry Pi**, enabling real-time monitoring without relying on cloud services.
 
 ## 🔴 Live Demo
-👉 **https://sanjana-0809-smarteye.hf.space**
+ **https://sanjana-0809-smarteye.hf.space**
 
 ---
 
