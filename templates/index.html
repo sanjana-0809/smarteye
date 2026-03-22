@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartEye — AI Surveillance</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060a0f;
+    --surface: #0d1117;
+    --border: #1a2a3a;
+    --accent: #00ff9d;
+    --accent2: #00b4ff;
+    --danger: #ff3b3b;
+    --warn: #ffaa00;
+    --text: #c8d8e8;
+    --muted: #4a6a8a;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-ui: 'Rajdhani', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-ui); min-height: 100vh; overflow-x: hidden; }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,157,0.015) 2px, rgba(0,255,157,0.015) 4px);
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    animation: pulse-ring 2s infinite;
+  }
+  .logo-icon::after {
+    content: '';
+    width: 12px; height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,255,157,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(0,255,157,0); }
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .logo-text { font-size: 22px; font-weight: 700; letter-spacing: 3px; color: #fff; }
+  .logo-text span { color: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .status-badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 2px;
+    letter-spacing: 2px;
+    border: 1px solid;
+    transition: all 0.3s;
+  }
+  .status-badge.armed { color: var(--accent); border-color: var(--accent); background: rgba(0,255,157,0.08); }
+  .status-badge.alerted { color: var(--danger); border-color: var(--danger); background: rgba(255,59,59,0.12); animation: blink 0.5s infinite; }
+  .status-badge.loading { color: var(--warn); border-color: var(--warn); background: rgba(255,170,0,0.08); }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .fps-display { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .fps-display span { color: var(--accent2); }
+
+  .main { padding: 20px 24px; display: grid; grid-template-columns: 1fr 320px; gap: 20px; max-width: 1400px; margin: 0 auto; }
+
+  /* Feed panel */
+  .feed-panel { display: flex; flex-direction: column; gap: 16px; }
+  .panel-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-label::before { content: '//'; color: var(--accent); }
+
+  .feed-container {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    background: #000;
+    aspect-ratio: 4/3;
+  }
+  .feed-container::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(0,255,157,0.03) 0%, transparent 50%, rgba(0,180,255,0.03) 100%);
+    pointer-events: none; z-index: 2;
+  }
+  /* Corner brackets */
+  .feed-container::after {
+    content: '';
+    position: absolute; inset: 8px;
+    border: 1px solid rgba(0,255,157,0.15);
+    border-radius: 2px;
+    pointer-events: none; z-index: 2;
+  }
+  .corner { position: absolute; width: 16px; height: 16px; z-index: 3; }
+  .corner-tl { top: 4px; left: 4px; border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+  .corner-tr { top: 4px; right: 4px; border-top: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+  .corner-bl { bottom: 4px; left: 4px; border-bottom: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+  .corner-br { bottom: 4px; right: 4px; border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+
+  #live-feed {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    position: relative; z-index: 1;
+  }
+  .feed-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(6,10,15,0.8));
+    padding: 12px 16px 10px;
+    display: flex; justify-content: space-between; align-items: flex-end;
+    z-index: 4;
+  }
+  .feed-tag { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+  .rec-dot { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--danger); }
+  .rec-dot::before { content: ''; width: 6px; height: 6px; background: var(--danger); border-radius: 50%; animation: pulse-dot 1s infinite; }
+
+  /* Stat cards */
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .stat-card.green::before { background: var(--accent); }
+  .stat-card.blue::before { background: var(--accent2); }
+  .stat-card.red::before { background: var(--danger); }
+  .stat-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; color: var(--muted); margin-bottom: 6px; }
+  .stat-value { font-size: 22px; font-weight: 700; line-height: 1; }
+  .stat-value.green { color: var(--accent); }
+  .stat-value.blue { color: var(--accent2); }
+  .stat-value.red { color: var(--danger); }
+
+  /* Right panel */
+  .right-panel { display: flex; flex-direction: column; gap: 16px; }
+
+  .log-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    flex: 1;
+  }
+  .log-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .log-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; color: var(--muted); }
+  .log-count { font-family: var(--font-mono); font-size: 10px; color: var(--accent); }
+  .log-body {
+    height: 280px;
+    overflow-y: auto;
+    padding: 8px 0;
+    scroll-behavior: smooth;
+  }
+  .log-body::-webkit-scrollbar { width: 3px; }
+  .log-body::-webkit-scrollbar-track { background: transparent; }
+  .log-body::-webkit-scrollbar-thumb { background: var(--border); }
+  .log-entry {
+    padding: 4px 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    border-left: 2px solid transparent;
+    transition: all 0.2s;
+    line-height: 1.5;
+  }
+  .log-entry.alert { color: var(--danger); border-left-color: var(--danger); background: rgba(255,59,59,0.06); }
+  .log-entry.info { color: var(--accent); border-left-color: var(--accent); }
+  .log-entry.new { animation: flash-in 0.3s ease; }
+  @keyframes flash-in {
+    from { background: rgba(0,255,157,0.1); }
+    to { background: transparent; }
+  }
+
+  .alerts-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .alerts-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .alerts-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; color: var(--muted); }
+  .alerts-body { max-height: 180px; overflow-y: auto; }
+  .alert-item {
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--font-mono); font-size: 11px; color: var(--text);
+    transition: background 0.2s;
+  }
+  .alert-item:hover { background: rgba(255,255,255,0.03); }
+  .alert-item:last-child { border-bottom: none; }
+  .alert-dot { width: 6px; height: 6px; background: var(--danger); border-radius: 50%; flex-shrink: 0; }
+  .alert-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; color: var(--muted); }
+  .no-alerts { padding: 20px 16px; text-align: center; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+  @media (max-width: 900px) {
+    .main { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon"></div>
+    <div class="logo-text">SMART<span>EYE</span></div>
+  </div>
+  <div class="header-right">
+    <div class="fps-display">FPS <span id="fps-val">—</span></div>
+    <div class="status-badge loading" id="status-badge">LOADING</div>
+  </div>
+</header>
+
+<main class="main">
+  <div class="feed-panel">
+    <div>
+      <div class="panel-label">LIVE FEED</div>
+      <div class="feed-container">
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
+        <img id="live-feed" src="/current_frame" alt="Live Feed">
+        <div class="feed-overlay">
+          <div class="feed-tag">CAM-01 &nbsp;|&nbsp; YOLOv8n</div>
+          <div class="rec-dot">LIVE</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card green">
+        <div class="stat-label">DETECTIONS</div>
+        <div class="stat-value green" id="detection-count">0</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">MODEL</div>
+        <div class="stat-value blue" style="font-size:14px; padding-top:4px;" id="model-status">LOADING</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">ALERTS</div>
+        <div class="stat-value red" id="alert-count">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="log-panel">
+      <div class="log-header">
+        <div class="log-title">SYSTEM LOGS</div>
+        <div class="log-count" id="log-count">0 entries</div>
+      </div>
+      <div class="log-body" id="log-body">
+        <div class="log-entry">Waiting for system...</div>
+      </div>
+    </div>
+
+    <div class="alerts-panel">
+      <div class="alerts-header">
+        <div class="alerts-title">RECENT CAPTURES</div>
+      </div>
+      <div class="alerts-body" id="alerts-body">
+        <div class="no-alerts">No captures yet</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  let detectionCount = 0;
+  let alertCount = 0;
+  let prevLogs = [];
+
+  function updateFrame() {
+    const img = document.getElementById('live-feed');
+    img.src = '/current_frame?' + Date.now();
+  }
+  setInterval(updateFrame, 150);
+
+  function fetchStatus() {
+    fetch('/api/status')
+      .then(r => r.json())
+      .then(data => {
+        const badge = document.getElementById('status-badge');
+        badge.className = 'status-badge';
+        if (data.status === 'ALERTED') {
+          badge.classList.add('alerted');
+          badge.textContent = '⚠ ALERTED';
+        } else if (data.status === 'ARMED') {
+          badge.classList.add('armed');
+          badge.textContent = '● ARMED';
+        } else {
+          badge.classList.add('loading');
+          badge.textContent = 'LOADING';
+        }
+        document.getElementById('fps-val').textContent = data.fps || '—';
+        document.getElementById('model-status').textContent = data.model_ready ? 'READY' : 'LOADING';
+      })
+      .catch(() => {});
+  }
+
+  function fetchLogs() {
+    fetch('/api/logs')
+      .then(r => r.json())
+      .then(data => {
+        const body = document.getElementById('log-body');
+        document.getElementById('log-count').textContent = data.length + ' entries';
+
+        body.innerHTML = '';
+        data.forEach((log, i) => {
+          const div = document.createElement('div');
+          div.className = 'log-entry';
+          const isNew = !prevLogs.includes(log);
+          if (log.includes('DETECTED') || log.includes('ALERT')) div.classList.add('alert');
+          else if (log.includes('Successfully') || log.includes('Running') || log.includes('Loaded')) div.classList.add('info');
+          if (isNew && i === 0) div.classList.add('new');
+          div.textContent = log;
+
+          if (log.includes('DETECTED')) detectionCount++;
+          body.appendChild(div);
+        });
+        prevLogs = [...data];
+        document.getElementById('detection-count').textContent = detectionCount;
+      })
+      .catch(() => {});
+  }
+
+  function fetchAlerts() {
+    fetch('/')
+      .then(r => r.text())
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+      })
+      .catch(() => {});
+  }
+
+  // Update alerts from server
+  function updateAlerts() {
+    fetch('/api/logs')
+      .then(r => r.json())
+      .then(data => {
+        const alerts = data.filter(l => l.includes('DETECTED') || l.includes('ALERT'));
+        alertCount = alerts.length;
+        document.getElementById('alert-count').textContent = alertCount;
+        const body = document.getElementById('alerts-body');
+        if (alerts.length === 0) {
+          body.innerHTML = '<div class="no-alerts">No captures yet</div>';
+        } else {
+          body.innerHTML = alerts.map(a =>
+            `<div class="alert-item"><div class="alert-dot"></div><div class="alert-name">${a}</div></div>`
+          ).join('');
+        }
+      });
+  }
+
+  setInterval(fetchLogs, 2000);
+  setInterval(fetchStatus, 3000);
+  setInterval(updateAlerts, 5000);
+  fetchLogs();
+  fetchStatus();
+</script>
+</body>
+</html>

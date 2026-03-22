@@ -1,0 +1,6 @@
+captures/
+*.pyc
+__pycache__/
+*.pt
+.env
+static/demo.mp4
