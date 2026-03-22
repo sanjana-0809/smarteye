@@ -324,7 +324,7 @@
     const img = document.getElementById('live-feed');
     img.src = '/current_frame?' + Date.now();
   }
-  setInterval(updateFrame, 150);
+  setInterval(updateFrame, 40);
 
   function fetchStatus() {
     fetch('/api/status')
