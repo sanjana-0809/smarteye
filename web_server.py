@@ -28,17 +28,16 @@ def get_logs():
 
 @app.route('/api/status')
 def get_status():
-    if camera_instance:
-        return jsonify({
-            "status": "ALERTED" if camera_instance.in_alert_state else "ARMED",
-            "model_ready": camera_instance.model_ready,
-            "fps": round(camera_instance.fps, 1)
-        })
-    return jsonify({"status": "LOADING", "model_ready": False, "fps": 0})
+    if camera_instance is None:
+        return jsonify({'status': 'LOADING', 'fps': 0, 'model_ready': False})
+    return jsonify({
+        'status': 'ALERTED' if camera_instance.in_alert_state else 'ARMED',
+        'fps': round(camera_instance.fps, 1),
+        'model_ready': camera_instance.model_ready
+    })
 
 def start_server(cam_obj):
     global camera_instance
-    if cam_obj:
-        camera_instance = cam_obj
+    camera_instance = cam_obj
     port = int(os.environ.get("PORT", 7860))
     app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
