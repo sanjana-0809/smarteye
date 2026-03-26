@@ -3,407 +3,328 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SmartEye — AI Surveillance</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<title>SmartEye</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #060a0f;
-    --surface: #0d1117;
-    --border: #1a2a3a;
-    --accent: #00ff9d;
-    --accent2: #00b4ff;
-    --danger: #ff3b3b;
-    --warn: #ffaa00;
-    --text: #c8d8e8;
-    --muted: #4a6a8a;
-    --font-mono: 'Share Tech Mono', monospace;
-    --font-ui: 'Rajdhani', sans-serif;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: var(--bg); color: var(--text); font-family: var(--font-ui); min-height: 100vh; overflow-x: hidden; }
+:root {
+  --bg:      #0b0d11;
+  --panel:   #0f1117;
+  --panel2:  #13161e;
+  --border:  #1e2535;
+  --text:    #c8d0dc;
+  --muted:   #4a5568;
+  --muted2:  #64748b;
+  --green:   #22c55e;
+  --red:     #ef4444;
+  --blue:    #3b82f6;
+  --amber:   #f59e0b;
+  --mono:    'IBM Plex Mono', monospace;
+  --sans:    'IBM Plex Sans', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--sans); font-size:12px; }
 
-  /* Scanline overlay */
-  body::before {
-    content: '';
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,157,0.015) 2px, rgba(0,255,157,0.015) 4px);
-    pointer-events: none;
-    z-index: 1000;
-  }
+/* TOPBAR */
+.topbar {
+  height:38px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 16px; background:var(--panel); border-bottom:1px solid var(--border);
+}
+.brand { display:flex; align-items:center; gap:8px; }
+.brand-icon { width:24px;height:24px;background:var(--blue);border-radius:5px;display:flex;align-items:center;justify-content:center; }
+.brand-icon svg { width:14px;height:14px;fill:#fff; }
+.brand-name { font-family:var(--mono); font-size:13px; font-weight:500; color:#fff; letter-spacing:2px; }
+.topbar-right { display:flex; align-items:center; gap:16px; }
+.t-pill { display:flex;align-items:center;gap:5px; font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:.5px; }
+.dot { width:6px;height:6px;border-radius:50%; }
+.d-green { background:var(--green); animation:blink 2s infinite; }
+.d-red   { background:var(--red);   animation:blink .5s infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:.3} }
+#clock { font-family:var(--mono);font-size:11px;color:var(--muted2);letter-spacing:1px; }
 
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 24px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    position: sticky; top: 0; z-index: 100;
-  }
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .logo-icon {
-    width: 36px; height: 36px;
-    border: 2px solid var(--accent);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    position: relative;
-    animation: pulse-ring 2s infinite;
-  }
-  .logo-icon::after {
-    content: '';
-    width: 12px; height: 12px;
-    background: var(--accent);
-    border-radius: 50%;
-    animation: pulse-dot 2s infinite;
-  }
-  @keyframes pulse-ring {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(0,255,157,0.4); }
-    50% { box-shadow: 0 0 0 8px rgba(0,255,157,0); }
-  }
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-  .logo-text { font-size: 22px; font-weight: 700; letter-spacing: 3px; color: #fff; }
-  .logo-text span { color: var(--accent); }
-  .header-right { display: flex; align-items: center; gap: 16px; }
-  .status-badge {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    padding: 4px 12px;
-    border-radius: 2px;
-    letter-spacing: 2px;
-    border: 1px solid;
-    transition: all 0.3s;
-  }
-  .status-badge.armed { color: var(--accent); border-color: var(--accent); background: rgba(0,255,157,0.08); }
-  .status-badge.alerted { color: var(--danger); border-color: var(--danger); background: rgba(255,59,59,0.12); animation: blink 0.5s infinite; }
-  .status-badge.loading { color: var(--warn); border-color: var(--warn); background: rgba(255,170,0,0.08); }
-  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+/* METRICS */
+.metrics { display:grid; grid-template-columns:repeat(5,1fr); border-bottom:1px solid var(--border); background:var(--panel); }
+.metric { padding:10px 16px; border-right:1px solid var(--border); }
+.metric:last-child { border-right:none; }
+.m-label { font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted); margin-bottom:3px; }
+.m-value { font-family:var(--mono);font-size:18px;font-weight:500;color:#fff; line-height:1; }
+.mv-green { color:var(--green); }
+.mv-red   { color:#f87171; }
+.mv-blue  { color:#60a5fa; }
+.mv-amber { color:#fbbf24; }
 
-  .fps-display { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
-  .fps-display span { color: var(--accent2); }
+/* BODY */
+.body { display:grid; grid-template-columns:1fr 300px; height:calc(100vh - 38px - 42px); }
 
-  .main { padding: 20px 24px; display: grid; grid-template-columns: 1fr 320px; gap: 20px; max-width: 1400px; margin: 0 auto; }
+/* FEED */
+.feed-col { display:flex;flex-direction:column;border-right:1px solid var(--border); }
+.panel-head { height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:var(--panel2);border-bottom:1px solid var(--border);flex-shrink:0; }
+.ph-title { font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2); }
+.ph-right { display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--muted); }
+.rec-dot { width:5px;height:5px;border-radius:50%;background:var(--red);animation:blink 1s infinite; }
 
-  /* Feed panel */
-  .feed-panel { display: flex; flex-direction: column; gap: 16px; }
-  .panel-label {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 3px;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .panel-label::before { content: '//'; color: var(--accent); }
+.feed-wrap { flex:1;position:relative;background:#000;overflow:hidden;min-height:0; }
+#live-feed { width:100%;height:100%;object-fit:cover;display:block; }
 
-  .feed-container {
-    position: relative;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    overflow: hidden;
-    background: #000;
-    aspect-ratio: 4/3;
-  }
-  .feed-container::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(135deg, rgba(0,255,157,0.03) 0%, transparent 50%, rgba(0,180,255,0.03) 100%);
-    pointer-events: none; z-index: 2;
-  }
-  /* Corner brackets */
-  .feed-container::after {
-    content: '';
-    position: absolute; inset: 8px;
-    border: 1px solid rgba(0,255,157,0.15);
-    border-radius: 2px;
-    pointer-events: none; z-index: 2;
-  }
-  .corner { position: absolute; width: 16px; height: 16px; z-index: 3; }
-  .corner-tl { top: 4px; left: 4px; border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
-  .corner-tr { top: 4px; right: 4px; border-top: 2px solid var(--accent); border-right: 2px solid var(--accent); }
-  .corner-bl { bottom: 4px; left: 4px; border-bottom: 2px solid var(--accent); border-left: 2px solid var(--accent); }
-  .corner-br { bottom: 4px; right: 4px; border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+/* Minimal HUD */
+.hud { position:absolute;inset:0;pointer-events:none; }
+.hud-tl,.hud-tr,.hud-bl,.hud-br { position:absolute;width:12px;height:12px; }
+.hud-tl { top:8px;left:8px;   border-top:1px solid rgba(59,130,246,.5);border-left:1px solid rgba(59,130,246,.5); }
+.hud-tr { top:8px;right:8px;  border-top:1px solid rgba(59,130,246,.5);border-right:1px solid rgba(59,130,246,.5); }
+.hud-bl { bottom:8px;left:8px;  border-bottom:1px solid rgba(59,130,246,.5);border-left:1px solid rgba(59,130,246,.5); }
+.hud-br { bottom:8px;right:8px; border-bottom:1px solid rgba(59,130,246,.5);border-right:1px solid rgba(59,130,246,.5); }
+.hud-top { position:absolute;top:0;left:0;right:0;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent); }
+.hud-cam { font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4);letter-spacing:1.5px; }
+.hud-state { display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.07);padding:3px 9px;border-radius:3px; }
+.hs-dot { width:5px;height:5px;border-radius:50%; }
+.hs-text { font-family:var(--mono);font-size:9px;letter-spacing:1.5px; }
+.state-armed .hs-dot { background:var(--green); }
+.state-armed .hs-text { color:var(--green); }
+.state-alerted .hs-dot { background:var(--red);animation:blink .5s infinite; }
+.state-alerted .hs-text { color:var(--red); }
+.hud-bot { position:absolute;bottom:0;left:0;right:0;padding:8px 12px;background:linear-gradient(to top,rgba(0,0,0,.55),transparent); }
+.hud-meta { font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.3);letter-spacing:1px;line-height:1.8; }
 
-  #live-feed {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-    position: relative; z-index: 1;
-  }
-  .feed-overlay {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    background: linear-gradient(transparent, rgba(6,10,15,0.8));
-    padding: 12px 16px 10px;
-    display: flex; justify-content: space-between; align-items: flex-end;
-    z-index: 4;
-  }
-  .feed-tag { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 1px; }
-  .rec-dot { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--danger); }
-  .rec-dot::before { content: ''; width: 6px; height: 6px; background: var(--danger); border-radius: 50%; animation: pulse-dot 1s infinite; }
+/* RIGHT PANEL */
+.right-col { display:flex;flex-direction:column;overflow:hidden;background:var(--bg); }
 
-  /* Stat cards */
-  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 12px 16px;
-    position: relative;
-    overflow: hidden;
-  }
-  .stat-card::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  }
-  .stat-card.green::before { background: var(--accent); }
-  .stat-card.blue::before { background: var(--accent2); }
-  .stat-card.red::before { background: var(--danger); }
-  .stat-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; color: var(--muted); margin-bottom: 6px; }
-  .stat-value { font-size: 22px; font-weight: 700; line-height: 1; }
-  .stat-value.green { color: var(--accent); }
-  .stat-value.blue { color: var(--accent2); }
-  .stat-value.red { color: var(--danger); }
+/* Sections */
+.section { flex-shrink:0;border-bottom:1px solid var(--border);background:var(--panel); }
 
-  /* Right panel */
-  .right-panel { display: flex; flex-direction: column; gap: 16px; }
+/* System rows */
+.sys-row { display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-bottom:1px solid var(--border); }
+.sys-row:last-child { border-bottom:none; }
+.sr-key { font-size:10px;color:var(--muted2); }
+.sr-val { font-family:var(--mono);font-size:10px;font-weight:500; }
+.sv-g { color:var(--green); } .sv-b { color:#60a5fa; } .sv-a { color:#fbbf24; } .sv-m { color:var(--muted2); }
 
-  .log-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    overflow: hidden;
-    flex: 1;
-  }
-  .log-header {
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .log-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; color: var(--muted); }
-  .log-count { font-family: var(--font-mono); font-size: 10px; color: var(--accent); }
-  .log-body {
-    height: 280px;
-    overflow-y: auto;
-    padding: 8px 0;
-    scroll-behavior: smooth;
-  }
-  .log-body::-webkit-scrollbar { width: 3px; }
-  .log-body::-webkit-scrollbar-track { background: transparent; }
-  .log-body::-webkit-scrollbar-thumb { background: var(--border); }
-  .log-entry {
-    padding: 4px 16px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--muted);
-    border-left: 2px solid transparent;
-    transition: all 0.2s;
-    line-height: 1.5;
-  }
-  .log-entry.alert { color: var(--danger); border-left-color: var(--danger); background: rgba(255,59,59,0.06); }
-  .log-entry.info { color: var(--accent); border-left-color: var(--accent); }
-  .log-entry.new { animation: flash-in 0.3s ease; }
-  @keyframes flash-in {
-    from { background: rgba(0,255,157,0.1); }
-    to { background: transparent; }
-  }
+/* Telegram */
+.tg-row { display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border); }
+.tg-icon { width:26px;height:26px;background:#1d9bf0;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+.tg-icon svg { width:14px;height:14px;fill:#fff; }
+.tg-name { font-size:10px;font-weight:500;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.tg-online { font-family:var(--mono);font-size:9px;color:var(--green);display:flex;align-items:center;gap:4px; }
+.tg-stats { display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border); }
+.tg-stat { background:var(--panel);padding:7px 12px; }
+.tg-sv { font-family:var(--mono);font-size:14px;font-weight:500;color:#60a5fa; }
+.tg-sk { font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:1px; }
 
-  .alerts-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .alerts-header {
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .alerts-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; color: var(--muted); }
-  .alerts-body { max-height: 180px; overflow-y: auto; }
-  .alert-item {
-    padding: 8px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 10px;
-    font-family: var(--font-mono); font-size: 11px; color: var(--text);
-    transition: background 0.2s;
-  }
-  .alert-item:hover { background: rgba(255,255,255,0.03); }
-  .alert-item:last-child { border-bottom: none; }
-  .alert-dot { width: 6px; height: 6px; background: var(--danger); border-radius: 50%; flex-shrink: 0; }
-  .alert-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; color: var(--muted); }
-  .no-alerts { padding: 20px 16px; text-align: center; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+/* Alerts */
+.alert-scroll { max-height:120px;overflow-y:auto;background:var(--bg); }
+.alert-scroll::-webkit-scrollbar { width:2px; }
+.alert-scroll::-webkit-scrollbar-thumb { background:var(--border); }
+.af-row { display:flex;align-items:flex-start;gap:8px;padding:5px 12px;border-bottom:1px solid var(--border); }
+.af-tag { font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:2px;flex-shrink:0;margin-top:2px;letter-spacing:.5px; }
+.tag-alert { background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.2); }
+.tag-clear { background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.15); }
+.af-info { flex:1;min-width:0; }
+.af-msg { font-size:10px;color:var(--text);line-height:1.4;word-break:break-word; }
+.af-time { font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:1px; }
+.empty-note { padding:14px;font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;letter-spacing:1px; }
 
-  @media (max-width: 900px) {
-    .main { grid-template-columns: 1fr; }
-    .stats-row { grid-template-columns: repeat(3, 1fr); }
-  }
+/* Logs */
+.log-section { flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden; }
+.log-scroll { flex:1;overflow-y:auto;background:var(--bg);min-height:0; }
+.log-scroll::-webkit-scrollbar { width:2px; }
+.log-scroll::-webkit-scrollbar-thumb { background:var(--border); }
+.log-row { display:flex;padding:3px 0;border-bottom:1px solid rgba(30,37,53,.5); }
+.log-row:hover { background:var(--panel2); }
+.log-row.lr-alert { background:rgba(239,68,68,.04); }
+.log-row.lr-ok    { background:rgba(34,197,94,.03); }
+.log-row.lr-new   { animation:flash .35s ease; }
+@keyframes flash { from{background:rgba(59,130,246,.1)}to{background:transparent} }
+.lr-time { min-width:60px;padding:0 8px;font-family:var(--mono);font-size:9px;color:var(--muted);border-right:1px solid var(--border);flex-shrink:0;letter-spacing:.3px; }
+.lr-msg { padding:0 8px;font-family:var(--mono);font-size:9px;color:var(--muted2);flex:1;word-break:break-word;line-height:1.6; }
+.lr-msg.alert { color:#fca5a5; }
+.lr-msg.ok    { color:#86efac; }
 </style>
 </head>
 <body>
 
-<header class="header">
-  <div class="logo">
-    <div class="logo-icon"></div>
-    <div class="logo-text">SMART<span>EYE</span></div>
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+    </div>
+    <span class="brand-name">SMARTEYE</span>
   </div>
-  <div class="header-right">
-    <div class="fps-display">FPS <span id="fps-val">—</span></div>
-    <div class="status-badge loading" id="status-badge">LOADING</div>
+  <div class="topbar-right">
+    <div class="t-pill"><div class="dot d-green" id="status-dot"></div><span id="status-text">ARMED</span></div>
+    <div class="t-pill">TELEGRAM · <span style="color:var(--green)">ON</span></div>
+    <span id="clock">--:--:--</span>
   </div>
 </header>
 
-<main class="main">
-  <div class="feed-panel">
-    <div>
-      <div class="panel-label">LIVE FEED</div>
-      <div class="feed-container">
-        <div class="corner corner-tl"></div>
-        <div class="corner corner-tr"></div>
-        <div class="corner corner-bl"></div>
-        <div class="corner corner-br"></div>
-        <img id="live-feed" src="/video_feed" alt="Live Feed">
-        <div class="feed-overlay">
-          <div class="feed-tag">CAM-01 &nbsp;|&nbsp; YOLOv8n</div>
-          <div class="rec-dot">LIVE</div>
+<!-- METRICS -->
+<div class="metrics">
+  <div class="metric"><div class="m-label">Detections</div><div class="m-value mv-green" id="m-det">0</div></div>
+  <div class="metric"><div class="m-label">Alerts Sent</div><div class="m-value mv-red" id="m-alert">0</div></div>
+  <div class="metric"><div class="m-label">Live FPS</div><div class="m-value mv-blue" id="m-fps">—</div></div>
+  <div class="metric"><div class="m-label">Uptime</div><div class="m-value mv-amber" id="m-uptime">00:00</div></div>
+  <div class="metric"><div class="m-label">Model</div><div class="m-value" id="m-model" style="font-size:13px;padding-top:3px;">—</div></div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+  <!-- FEED -->
+  <div class="feed-col">
+    <div class="panel-head">
+      <span class="ph-title">Live Feed · CAM-01</span>
+      <div class="ph-right"><div class="rec-dot"></div>REC</div>
+    </div>
+    <div class="feed-wrap">
+      <img id="live-feed" src="/video_feed" alt="Live Feed">
+      <div class="hud">
+        <div class="hud-tl"></div><div class="hud-tr"></div>
+        <div class="hud-bl"></div><div class="hud-br"></div>
+        <div class="hud-top">
+          <span class="hud-cam">CAM-01 · PRIMARY</span>
+          <div class="hud-state state-armed" id="hud-state">
+            <div class="hs-dot"></div>
+            <div class="hs-text" id="hud-text">ARMED</div>
+          </div>
+        </div>
+        <div class="hud-bot">
+          <div class="hud-meta">YOLOv8n · CPU · 320×240 · Threshold 0.15 · Window 3f &nbsp;&nbsp; FPS: <span id="hud-fps">—</span></div>
         </div>
       </div>
     </div>
-
-    <div class="stats-row">
-      <div class="stat-card green">
-        <div class="stat-label">DETECTIONS</div>
-        <div class="stat-value green" id="detection-count">0</div>
-      </div>
-      <div class="stat-card blue">
-        <div class="stat-label">MODEL</div>
-        <div class="stat-value blue" style="font-size:14px; padding-top:4px;" id="model-status">LOADING</div>
-      </div>
-      <div class="stat-card red">
-        <div class="stat-label">ALERTS</div>
-        <div class="stat-value red" id="alert-count">0</div>
-      </div>
-    </div>
   </div>
 
-  <div class="right-panel">
-    <div class="log-panel">
-      <div class="log-header">
-        <div class="log-title">SYSTEM LOGS</div>
-        <div class="log-count" id="log-count">0 entries</div>
+  <!-- RIGHT -->
+  <div class="right-col">
+
+    <!-- System Status -->
+    <div class="section">
+      <div class="panel-head"><span class="ph-title">System Status</span></div>
+      <div class="sys-row"><span class="sr-key">AI Model</span><span class="sr-val sv-g" id="sys-model">—</span></div>
+      <div class="sys-row"><span class="sr-key">Camera</span><span class="sr-val sv-g">ONLINE</span></div>
+      <div class="sys-row"><span class="sr-key">Telegram</span><span class="sr-val sv-g">CONNECTED</span></div>
+      <div class="sys-row"><span class="sr-key">Edge Mode</span><span class="sr-val sv-b">CPU</span></div>
+      <div class="sys-row"><span class="sr-key">Cooldown</span><span class="sr-val sv-a">8s</span></div>
+      <div class="sys-row"><span class="sr-key">Detection</span><span class="sr-val sv-m">HUMAN</span></div>
+    </div>
+
+    <!-- Telegram -->
+    <div class="section">
+      <div class="panel-head"><span class="ph-title">Telegram Bot</span></div>
+      <div class="tg-row">
+        <div class="tg-icon"><svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg></div>
+        <span class="tg-name">@smarteye_surveillance_bot</span>
+        <div class="tg-online"><div class="dot d-green" style="width:5px;height:5px;"></div>ON</div>
       </div>
-      <div class="log-body" id="log-body">
-        <div class="log-entry">Waiting for system...</div>
+      <div class="tg-stats">
+        <div class="tg-stat"><div class="tg-sv" id="tg-sent">0</div><div class="tg-sk">Sent</div></div>
+        <div class="tg-stat"><div class="tg-sv" id="tg-last">—</div><div class="tg-sk">Last</div></div>
       </div>
     </div>
 
-    <div class="alerts-panel">
-      <div class="alerts-header">
-        <div class="alerts-title">RECENT CAPTURES</div>
+    <!-- Alert History -->
+    <div class="section">
+      <div class="panel-head">
+        <span class="ph-title">Alert History</span>
+        <div class="ph-right" id="alert-badge">0 events</div>
       </div>
-      <div class="alerts-body" id="alerts-body">
-        <div class="no-alerts">No captures yet</div>
+      <div class="alert-scroll" id="alert-feed">
+        <div class="empty-note">— NO ALERTS —</div>
       </div>
     </div>
+
+    <!-- Logs -->
+    <div class="log-section">
+      <div class="panel-head">
+        <span class="ph-title">System Logs</span>
+        <div class="ph-right" id="log-count">0 entries</div>
+      </div>
+      <div class="log-scroll" id="log-body">
+        <div class="log-row"><div class="lr-time">--:--:--</div><div class="lr-msg">Waiting...</div></div>
+      </div>
+    </div>
+
   </div>
-</main>
+</div>
 
 <script>
-  let detectionCount = 0;
-  let alertCount = 0;
-  let prevLogs = [];
+// Clock
+function tick() { document.getElementById('clock').textContent = new Date().toTimeString().slice(0,8); }
+tick(); setInterval(tick, 1000);
 
-  
+// Uptime
+const t0 = Date.now();
+function uptime() {
+  const s = Math.floor((Date.now()-t0)/1000);
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+  document.getElementById('m-uptime').textContent = h>0
+    ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+    : `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+uptime(); setInterval(uptime, 1000);
 
-  function fetchStatus() {
-    fetch('/api/status')
-      .then(r => r.json())
-      .then(data => {
-        const badge = document.getElementById('status-badge');
-        badge.className = 'status-badge';
-        if (data.status === 'ALERTED') {
-          badge.classList.add('alerted');
-          badge.textContent = '⚠ ALERTED';
-        } else if (data.status === 'ARMED') {
-          badge.classList.add('armed');
-          badge.textContent = '● ARMED';
-        } else {
-          badge.classList.add('loading');
-          badge.textContent = 'LOADING';
-        }
-        document.getElementById('fps-val').textContent = data.fps || '—';
-        document.getElementById('model-status').textContent = data.model_ready ? 'READY' : 'LOADING';
-      })
-      .catch(() => {});
-  }
+let prevLogs=[], detCount=0, alertCount=0, lastAlertTime='—';
 
-  function fetchLogs() {
-    fetch('/api/logs')
-      .then(r => r.json())
-      .then(data => {
-        const body = document.getElementById('log-body');
-        document.getElementById('log-count').textContent = data.length + ' entries';
+function fetchStatus() {
+  fetch('/api/status').then(r=>r.json()).then(d => {
+    const fps = d.fps ?? '—';
+    document.getElementById('m-fps').textContent = fps;
+    document.getElementById('hud-fps').textContent = fps;
+    document.getElementById('m-model').textContent = d.model_ready ? 'READY' : 'LOADING';
+    document.getElementById('sys-model').textContent = d.model_ready ? 'READY' : 'LOADING';
+    const alerted = d.status === 'ALERTED';
+    document.getElementById('hud-state').className = 'hud-state ' + (alerted ? 'state-alerted' : 'state-armed');
+    document.getElementById('hud-text').textContent = alerted ? 'ALERTED' : 'ARMED';
+    document.getElementById('status-text').textContent = alerted ? 'ALERTED' : 'ARMED';
+    document.getElementById('status-dot').className = 'dot ' + (alerted ? 'd-red' : 'd-green');
+  }).catch(()=>{});
+}
 
-        body.innerHTML = '';
-        data.forEach((log, i) => {
-          const div = document.createElement('div');
-          div.className = 'log-entry';
-          const isNew = !prevLogs.includes(log);
-          if (log.includes('DETECTED') || log.includes('ALERT')) div.classList.add('alert');
-          else if (log.includes('Successfully') || log.includes('Running') || log.includes('Loaded')) div.classList.add('info');
-          if (isNew && i === 0) div.classList.add('new');
-          div.textContent = log;
+function fetchLogs() {
+  fetch('/api/logs').then(r=>r.json()).then(data => {
+    document.getElementById('log-count').textContent = data.length + ' entries';
+    const body = document.getElementById('log-body');
+    body.innerHTML = '';
+    data.forEach((log, i) => {
+      const time = log.match(/\[(\d{2}:\d{2}:\d{2})\]/)?.[1] || '--:--:--';
+      const msg  = log.replace(/\[\d{2}:\d{2}:\d{2}\]\s*/,'');
+      const isAlert = log.includes('DETECTED')||log.includes('ALERT')||log.includes('HUMAN');
+      const isOk    = log.includes('Successfully')||log.includes('Loaded')||log.includes('Running')||log.includes('opened')||log.includes('Clear');
+      if (isAlert) detCount++;
+      const row = document.createElement('div');
+      row.className = 'log-row' + (isAlert?' lr-alert':isOk?' lr-ok':'');
+      if (!prevLogs.includes(log) && i===0) row.classList.add('lr-new');
+      row.innerHTML = `<div class="lr-time">${time}</div><div class="lr-msg ${isAlert?'alert':isOk?'ok':''}">${msg}</div>`;
+      body.appendChild(row);
+    });
+    prevLogs = [...data];
+    document.getElementById('m-det').textContent = detCount;
+  }).catch(()=>{});
+}
 
-          if (log.includes('DETECTED')) detectionCount++;
-          body.appendChild(div);
-        });
-        prevLogs = [...data];
-        document.getElementById('detection-count').textContent = detectionCount;
-      })
-      .catch(() => {});
-  }
+function updateAlerts() {
+  fetch('/api/logs').then(r=>r.json()).then(data => {
+    const alerts = data.filter(l=>l.includes('DETECTED')||l.includes('HUMAN')||l.includes('Clear')||l.includes('ALERT'));
+    alertCount = alerts.filter(a=>a.includes('DETECTED')||a.includes('HUMAN')).length;
+    document.getElementById('m-alert').textContent = alertCount;
+    document.getElementById('alert-badge').textContent = alertCount + ' events';
+    document.getElementById('tg-sent').textContent = alertCount;
+    const feed = document.getElementById('alert-feed');
+    if (!alerts.length) { feed.innerHTML='<div class="empty-note">— NO ALERTS —</div>'; return; }
+    feed.innerHTML = alerts.slice(0,8).map(a => {
+      const danger = a.includes('DETECTED')||a.includes('HUMAN');
+      const time = a.match(/\[(\d{2}:\d{2}:\d{2})\]/)?.[1]||'—';
+      if (danger) lastAlertTime = time;
+      const msg = a.replace(/\[\d{2}:\d{2}:\d{2}\]\s*/,'');
+      return `<div class="af-row">
+        <div class="af-tag ${danger?'tag-alert':'tag-clear'}">${danger?'ALERT':'CLEAR'}</div>
+        <div class="af-info"><div class="af-msg">${msg}</div><div class="af-time">${time}</div></div>
+      </div>`;
+    }).join('');
+    document.getElementById('tg-last').textContent = lastAlertTime;
+  }).catch(()=>{});
+}
 
-  function fetchAlerts() {
-    fetch('/')
-      .then(r => r.text())
-      .then(html => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-      })
-      .catch(() => {});
-  }
-
-  // Update alerts from server
-  function updateAlerts() {
-    fetch('/api/logs')
-      .then(r => r.json())
-      .then(data => {
-        const alerts = data.filter(l => l.includes('DETECTED') || l.includes('ALERT'));
-        alertCount = alerts.length;
-        document.getElementById('alert-count').textContent = alertCount;
-        const body = document.getElementById('alerts-body');
-        if (alerts.length === 0) {
-          body.innerHTML = '<div class="no-alerts">No captures yet</div>';
-        } else {
-          body.innerHTML = alerts.map(a =>
-            `<div class="alert-item"><div class="alert-dot"></div><div class="alert-name">${a}</div></div>`
-          ).join('');
-        }
-      });
-  }
-
-  setInterval(fetchLogs, 2000);
-  setInterval(fetchStatus, 3000);
-  setInterval(updateAlerts, 5000);
-  fetchLogs();
-  fetchStatus();
+setInterval(fetchStatus,2000); setInterval(fetchLogs,2000); setInterval(updateAlerts,3000);
+fetchStatus(); fetchLogs(); updateAlerts();
 </script>
 </body>
 </html>
