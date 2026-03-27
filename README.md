@@ -12,7 +12,7 @@
 
 ##  Live Demo
 
-** [![Live Demo](https://img.shields.io/badge/🔴%20LIVE%20DEMO-Click%20Here-red?style=for-the-badge)](https://sanjana-0809-smarteyee.hf.space) **
+** [ Click here for Live Demo](https://sanjana-0809-smarteyee.hf.space) **
 
 ---
 
